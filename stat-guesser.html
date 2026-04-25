@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Stat-Line 6 — Pokémon Guessing Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f7f4;
+    --surface: #ffffff;
+    --surface2: #f1efe8;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --text: #1a1a18;
+    --text2: #5f5e5a;
+    --text3: #888780;
+    --correct-bg: #eaf3de;
+    --correct-border: #97c459;
+    --correct-text: #27500a;
+    --wrong-bg: #faece7;
+    --wrong-border: #f09595;
+    --wrong-text: #4a1b0c;
+    --info-bg: #e6f1fb;
+    --info-border: #85b7eb;
+    --info-text: #0c447c;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #26262a;
+      --surface2: #2c2c2a;
+      --border: rgba(255,255,255,0.12);
+      --border2: rgba(255,255,255,0.22);
+      --text: #f1efe8;
+      --text2: #b4b2a9;
+      --text3: #888780;
+      --correct-bg: #173404;
+      --correct-border: #639922;
+      --correct-text: #c0dd97;
+      --wrong-bg: #4a1b0c;
+      --wrong-border: #d85a30;
+      --wrong-text: #f5c4b3;
+      --info-bg: #042c53;
+      --info-border: #378add;
+      --info-text: #b5d4f4;
+    }
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  #game-wrap {
+    width: 100%;
+    max-width: 560px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 1.75rem;
+  }
+
+  .game-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .game-sub {
+    font-size: 13px;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  .score-row {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 13px;
+    color: var(--text2);
+  }
+
+  .score-val { font-weight: 600; color: var(--text); }
+
+  /* Stat card */
+  .stat-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 0.5px solid var(--border);
+    padding: 1.5rem 1.75rem 1.25rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .stat-row { margin-bottom: 11px; }
+
+  .stat-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+
+  .stat-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    width: 68px;
+  }
+
+  .stat-val {
+    font-size: 13px;
+    font-weight: 600;
+    min-width: 32px;
+    text-align: right;
+  }
+
+  .bar-bg {
+    flex: 1;
+    height: 9px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 0 10px;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.75s cubic-bezier(.4,0,.2,1);
+  }
+
+  .stat-inline {
+    display: flex;
+    align-items: center;
+  }
+
+  .stat-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 0.5px solid var(--border);
+  }
+
+  .bst-label {
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .bst-val { font-weight: 600; color: var(--text); }
+
+  .types-row { display: flex; gap: 6px; }
+
+  .type-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 99px;
+    text-transform: capitalize;
+    letter-spacing: 0.3px;
+    border: 1px solid transparent;
+  }
+
+  /* Options */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+
+  .option-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    transition: border-color 0.13s, background 0.13s;
+    text-align: left;
+    width: 100%;
+  }
+
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--info-border);
+    background: var(--info-bg);
+  }
+
+  .option-btn.correct {
+    border-color: var(--correct-border) !important;
+    background: var(--correct-bg) !important;
+    color: var(--correct-text) !important;
+  }
+
+  .option-btn.wrong {
+    border-color: var(--wrong-border) !important;
+    background: var(--wrong-bg) !important;
+    color: var(--wrong-text) !important;
+  }
+
+  .option-btn:disabled { cursor: default; }
+
+  .poke-sprite {
+    width: 44px;
+    height: 44px;
+    image-rendering: pixelated;
+    object-fit: contain;
+    flex-shrink: 0;
+    transition: filter 0.3s;
+  }
+
+  .poke-sprite.hidden { filter: brightness(0) opacity(0.15); }
+
+  .option-name { flex: 1; line-height: 1.3; }
+
+  /* Result banner */
+  .result-banner {
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+    margin-bottom: 1rem;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    display: none;
+    line-height: 1.5;
+  }
+
+  .result-banner.correct {
+    display: block;
+    background: var(--correct-bg);
+    color: var(--correct-text);
+    border: 0.5px solid var(--correct-border);
+  }
+
+  .result-banner.wrong {
+    display: block;
+    background: var(--wrong-bg);
+    color: var(--wrong-text);
+    border: 0.5px solid var(--wrong-border);
+  }
+
+  /* Next button */
+  .next-btn {
+    display: none;
+    width: 100%;
+    padding: 13px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border2);
+    background: var(--surface);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    cursor: pointer;
+    color: var(--text);
+    letter-spacing: 0.5px;
+    transition: background 0.13s;
+    margin-bottom: 1rem;
+  }
+
+  .next-btn:hover { background: var(--surface2); }
+
+  /* Gen filter */
+  .gen-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .gen-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.13s;
+  }
+
+  .gen-btn.active {
+    border-color: #378add;
+    background: #e6f1fb;
+    color: #0c447c;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .gen-btn.active {
+      background: #042c53;
+      color: #b5d4f4;
+    }
+  }
+
+  /* Loading */
+  .loading-msg {
+    text-align: center;
+    padding: 4rem 0;
+    color: var(--text2);
+    font-size: 14px;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border);
+    border-top-color: #378add;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    .game-title { font-size: 10px; }
+    .stat-card { padding: 1.25rem 1.25rem 1rem; }
+    .options-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .option-btn { font-size: 12px; padding: 9px 10px; }
+    .poke-sprite { width: 36px; height: 36px; }
+  }
+</style>
+</head>
+<body>
+<div id="game-wrap">
+  <div class="header">
+    <div class="game-title">⚡ The Stat-Line 6</div>
+    <div class="game-sub">Guess the Pokémon from its base stats</div>
+    <div class="score-row">
+      <span>Score <span class="score-val" id="score-disp">0</span></span>
+      <span>🔥 Streak <span class="score-val" id="streak-disp">0</span></span>
+      <span>Round <span class="score-val" id="round-disp">1</span></span>
+    </div>
+  </div>
+
+  <div class="gen-row" id="gen-row">
+    <button class="gen-btn active" data-gen="1">Gen I</button>
+    <button class="gen-btn active" data-gen="2">Gen II</button>
+    <button class="gen-btn active" data-gen="3">Gen III</button>
+    <button class="gen-btn active" data-gen="4">Gen IV</button>
+  </div>
+
+  <div id="game-area">
+    <div class="loading-msg">
+      <div class="spinner"></div>
+      <div>Loading Pokédex…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Gen 1-4 ID ranges
+const GEN_RANGES = {
+  1: [1, 151],
+  2: [152, 251],
+  3: [252, 386],
+  4: [387, 493]
+};
+
+const STAT_COLORS = ['#E24B4A','#D85A30','#BA7517','#7F77DD','#1D9E75','#378ADD'];
+const STAT_NAMES = ['HP','Attack','Defense','Sp. Atk','Sp. Def','Speed'];
+const STAT_KEYS  = ['hp','attack','defense','special-attack','special-defense','speed'];
+
+const TYPE_COLORS = {
+  normal:   { bg:'#D3D1C7', text:'#444441', border:'#B4B2A9' },
+  fire:     { bg:'#F5C4B3', text:'#993C1D', border:'#F0997B' },
+  water:    { bg:'#B5D4F4', text:'#185FA5', border:'#85B7EB' },
+  grass:    { bg:'#C0DD97', text:'#3B6D11', border:'#97C459' },
+  electric: { bg:'#FAC775', text:'#854F0B', border:'#EF9F27' },
+  ice:      { bg:'#B5D4F4', text:'#0C447C', border:'#85B7EB' },
+  fighting: { bg:'#F5C4B3', text:'#712B13', border:'#D85A30' },
+  poison:   { bg:'#CECBF6', text:'#3C3489', border:'#AFA9EC' },
+  ground:   { bg:'#FAC775', text:'#633806', border:'#EF9F27' },
+  flying:   { bg:'#CECBF6', text:'#534AB7', border:'#AFA9EC' },
+  psychic:  { bg:'#F4C0D1', text:'#72243E', border:'#ED93B1' },
+  bug:      { bg:'#C0DD97', text:'#27500A', border:'#97C459' },
+  rock:     { bg:'#D3D1C7', text:'#2C2C2A', border:'#B4B2A9' },
+  ghost:    { bg:'#CECBF6', text:'#26215C', border:'#7F77DD' },
+  dragon:   { bg:'#B5D4F4', text:'#042C53', border:'#378ADD' },
+  dark:     { bg:'#D3D1C7', text:'#2C2C2A', border:'#888780' },
+  steel:    { bg:'#D3D1C7', text:'#444441', border:'#B4B2A9' },
+  fairy:    { bg:'#F4C0D1', text:'#993556', border:'#ED93B1' }
+};
+
+let allPokemonCache = {};
+let score = 0, streak = 0, round = 1;
+let answered = false;
+let activeGens = new Set([1,2,3,4]);
+
+// Cache fetched pokemon objects to avoid re-fetching
+const pokemonCache = {};
+
+async function fetchPokemon(id) {
+  if (pokemonCache[id]) return pokemonCache[id];
+  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
+  const data = await res.json();
+  pokemonCache[id] = data;
+  return data;
+}
+
+function getIdsForActiveGens() {
+  const ids = [];
+  for (const g of activeGens) {
+    const [lo, hi] = GEN_RANGES[g];
+    for (let i = lo; i <= hi; i++) ids.push(i);
+  }
+  return ids;
+}
+
+function getBST(p) { return p.stats.reduce((s, st) => s + st.base_stat, 0); }
+
+function getStats(p) {
+  return STAT_KEYS.map(k => {
+    const found = p.stats.find(s => s.stat.name === k);
+    return found ? found.base_stat : 0;
+  });
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function capitalize(s) {
+  return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function findDistractors(correct, pool) {
+  const correctBST = getBST(correct);
+  const correctStats = getStats(correct);
+
+  return pool
+    .filter(p => p.id !== correct.id)
+    .map(p => {
+      const bstDiff = Math.abs(getBST(p) - correctBST);
+      const pStats = getStats(p);
+      const overlap = correctStats.filter((v, i) => Math.abs(v - pStats[i]) < 20).length;
+      const noise = Math.random() * 40;
+      return { p, score: bstDiff * 0.4 - overlap * 18 + noise };
+    })
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 5)
+    .map(x => x.p);
+}
+
+async function startRound() {
+  answered = false;
+  const area = document.getElementById('game-area');
+  area.innerHTML = `<div class="loading-msg"><div class="spinner"></div><div>Loading Pokémon…</div></div>`;
+
+  document.getElementById('round-disp').textContent = round++;
+
+  const ids = getIdsForActiveGens();
+  if (ids.length < 6) {
+    area.innerHTML = `<div class="loading-msg">Please select at least one generation!</div>`;
+    return;
+  }
+
+  const shuffled = shuffle(ids);
+  const correctId = shuffled[0];
+
+  // Fetch correct + 60 candidates for distractor pool
+  const poolIds = shuffled.slice(0, 61);
+  const fetched = await Promise.all(poolIds.map(id => fetchPokemon(id)));
+  const correct = fetched[0];
+  const pool = fetched.slice(1);
+
+  const distractors = findDistractors(correct, pool);
+  const options = shuffle([correct, ...distractors.slice(0, 5)]);
+
+  renderGame(correct, options);
+}
+
+function renderGame(correct, options) {
+  const area = document.getElementById('game-area');
+  area.innerHTML = '';
+
+  const stats = getStats(correct);
+  const bst = stats.reduce((a, b) => a + b, 0);
+  const types = correct.types.map(t => t.type.name);
+
+  // --- Stat card ---
+  const card = document.createElement('div');
+  card.className = 'stat-card';
+
+  let statsHTML = '';
+  stats.forEach((val, i) => {
+    const pct = Math.min(100, Math.round((val / 255) * 100));
+    statsHTML += `
+      <div class="stat-row">
+        <div class="stat-inline">
+          <span class="stat-name">${STAT_NAMES[i]}</span>
+          <div class="bar-bg">
+            <div class="bar-fill" data-pct="${pct}" style="background:${STAT_COLORS[i]};"></div>
+          </div>
+          <span class="stat-val">${val}</span>
+        </div>
+      </div>`;
+  });
+
+  const typeBadgesHTML = types.map(t => {
+    const c = TYPE_COLORS[t] || { bg:'#D3D1C7', text:'#2C2C2A', border:'#B4B2A9' };
+    return `<span class="type-badge" style="background:${c.bg};color:${c.text};border-color:${c.border};">${t}</span>`;
+  }).join('');
+
+  card.innerHTML = `
+    ${statsHTML}
+    <div class="stat-footer">
+      <div class="bst-label">BST <span class="bst-val">${bst}</span></div>
+      <div class="types-row">${typeBadgesHTML}</div>
+    </div>`;
+  area.appendChild(card);
+
+  // --- Options ---
+  const grid = document.createElement('div');
+  grid.className = 'options-grid';
+
+  options.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.dataset.correct = (p.id === correct.id);
+    const sprite = p.sprites?.front_default || '';
+    btn.innerHTML = `
+      <img class="poke-sprite hidden" src="${sprite}" alt="${p.name}" onerror="this.style.display='none'">
+      <span class="option-name">${capitalize(p.name)}</span>`;
+    btn.addEventListener('click', () => handleAnswer(btn, p.id === correct.id, correct));
+    grid.appendChild(btn);
+  });
+
+  area.appendChild(grid);
+
+  // --- Result banner ---
+  const banner = document.createElement('div');
+  banner.className = 'result-banner';
+  banner.id = 'result-banner';
+  area.appendChild(banner);
+
+  // --- Next button ---
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'next-btn';
+  nextBtn.id = 'next-btn';
+  nextBtn.textContent = '▶  Next Round';
+  nextBtn.addEventListener('click', startRound);
+  area.appendChild(nextBtn);
+
+  // Animate bars
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll('.bar-fill').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  }));
+}
+
+function handleAnswer(clickedBtn, isCorrect, correct) {
+  if (answered) return;
+  answered = true;
+
+  // Reveal sprites
+  document.querySelectorAll('.poke-sprite').forEach(img => img.classList.remove('hidden'));
+
+  // Mark buttons
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.disabled = true;
+    if (btn.dataset.correct === 'true') btn.classList.add('correct');
+    else if (btn === clickedBtn) btn.classList.add('wrong');
+  });
+
+  const banner = document.getElementById('result-banner');
+  const nextBtn = document.getElementById('next-btn');
+
+  if (isCorrect) {
+    const bonus = streak * 2;
+    score += 10 + bonus;
+    streak++;
+    banner.className = 'result-banner correct';
+    banner.textContent = `Correct! It's ${capitalize(correct.name)}! +${10 + bonus} pts`;
+  } else {
+    streak = 0;
+    banner.className = 'result-banner wrong';
+    banner.textContent = `Not quite — it was ${capitalize(correct.name)}!`;
+  }
+
+  document.getElementById('score-disp').textContent = score;
+  document.getElementById('streak-disp').textContent = streak;
+  nextBtn.style.display = 'block';
+}
+
+// Gen filter buttons
+document.querySelectorAll('.gen-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const g = parseInt(btn.dataset.gen);
+    if (activeGens.has(g)) {
+      if (activeGens.size === 1) return; // keep at least one
+      activeGens.delete(g);
+      btn.classList.remove('active');
+    } else {
+      activeGens.add(g);
+      btn.classList.add('active');
+    }
+  });
+});
+
+startRound();
+</script>
+</body>
+</html>

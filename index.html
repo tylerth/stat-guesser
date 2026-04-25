@@ -69,7 +69,6 @@
     max-width: 560px;
   }
 
-  /* Header */
   .header {
     text-align: center;
     margin-bottom: 1.75rem;
@@ -99,7 +98,6 @@
 
   .score-val { font-weight: 600; color: var(--text); }
 
-  /* Stat card */
   .stat-card {
     background: var(--surface);
     border-radius: var(--radius-lg);
@@ -111,11 +109,9 @@
 
   .stat-row { margin-bottom: 11px; }
 
-  .stat-label-row {
+  .stat-inline {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 5px;
   }
 
   .stat-name {
@@ -150,14 +146,9 @@
     transition: width 0.75s cubic-bezier(.4,0,.2,1);
   }
 
-  .stat-inline {
-    display: flex;
-    align-items: center;
-  }
-
   .stat-footer {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-top: 6px;
     padding-top: 10px;
@@ -171,19 +162,6 @@
 
   .bst-val { font-weight: 600; color: var(--text); }
 
-  .types-row { display: flex; gap: 6px; }
-
-  .type-badge {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 3px 9px;
-    border-radius: 99px;
-    text-transform: capitalize;
-    letter-spacing: 0.3px;
-    border: 1px solid transparent;
-  }
-
-  /* Options */
   .options-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -241,7 +219,6 @@
 
   .option-name { flex: 1; line-height: 1.3; }
 
-  /* Result banner */
   .result-banner {
     border-radius: var(--radius);
     padding: 0.9rem 1rem;
@@ -267,7 +244,6 @@
     border: 0.5px solid var(--wrong-border);
   }
 
-  /* Next button */
   .next-btn {
     display: none;
     width: 100%;
@@ -286,7 +262,6 @@
 
   .next-btn:hover { background: var(--surface2); }
 
-  /* Gen filter */
   .gen-row {
     display: flex;
     gap: 6px;
@@ -320,7 +295,6 @@
     }
   }
 
-  /* Loading */
   .loading-msg {
     text-align: center;
     padding: 4rem 0;
@@ -345,7 +319,6 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Mobile */
   @media (max-width: 480px) {
     .game-title { font-size: 10px; }
     .stat-card { padding: 1.25rem 1.25rem 1rem; }
@@ -383,7 +356,6 @@
 </div>
 
 <script>
-// Gen 1-4 ID ranges
 const GEN_RANGES = {
   1: [1, 151],
   2: [152, 251],
@@ -395,33 +367,10 @@ const STAT_COLORS = ['#E24B4A','#D85A30','#BA7517','#7F77DD','#1D9E75','#378ADD'
 const STAT_NAMES = ['HP','Attack','Defense','Sp. Atk','Sp. Def','Speed'];
 const STAT_KEYS  = ['hp','attack','defense','special-attack','special-defense','speed'];
 
-const TYPE_COLORS = {
-  normal:   { bg:'#D3D1C7', text:'#444441', border:'#B4B2A9' },
-  fire:     { bg:'#F5C4B3', text:'#993C1D', border:'#F0997B' },
-  water:    { bg:'#B5D4F4', text:'#185FA5', border:'#85B7EB' },
-  grass:    { bg:'#C0DD97', text:'#3B6D11', border:'#97C459' },
-  electric: { bg:'#FAC775', text:'#854F0B', border:'#EF9F27' },
-  ice:      { bg:'#B5D4F4', text:'#0C447C', border:'#85B7EB' },
-  fighting: { bg:'#F5C4B3', text:'#712B13', border:'#D85A30' },
-  poison:   { bg:'#CECBF6', text:'#3C3489', border:'#AFA9EC' },
-  ground:   { bg:'#FAC775', text:'#633806', border:'#EF9F27' },
-  flying:   { bg:'#CECBF6', text:'#534AB7', border:'#AFA9EC' },
-  psychic:  { bg:'#F4C0D1', text:'#72243E', border:'#ED93B1' },
-  bug:      { bg:'#C0DD97', text:'#27500A', border:'#97C459' },
-  rock:     { bg:'#D3D1C7', text:'#2C2C2A', border:'#B4B2A9' },
-  ghost:    { bg:'#CECBF6', text:'#26215C', border:'#7F77DD' },
-  dragon:   { bg:'#B5D4F4', text:'#042C53', border:'#378ADD' },
-  dark:     { bg:'#D3D1C7', text:'#2C2C2A', border:'#888780' },
-  steel:    { bg:'#D3D1C7', text:'#444441', border:'#B4B2A9' },
-  fairy:    { bg:'#F4C0D1', text:'#993556', border:'#ED93B1' }
-};
-
-let allPokemonCache = {};
 let score = 0, streak = 0, round = 1;
 let answered = false;
 let activeGens = new Set([1,2,3,4]);
 
-// Cache fetched pokemon objects to avoid re-fetching
 const pokemonCache = {};
 
 async function fetchPokemon(id) {
@@ -497,7 +446,6 @@ async function startRound() {
   const shuffled = shuffle(ids);
   const correctId = shuffled[0];
 
-  // Fetch correct + 60 candidates for distractor pool
   const poolIds = shuffled.slice(0, 61);
   const fetched = await Promise.all(poolIds.map(id => fetchPokemon(id)));
   const correct = fetched[0];
@@ -515,9 +463,7 @@ function renderGame(correct, options) {
 
   const stats = getStats(correct);
   const bst = stats.reduce((a, b) => a + b, 0);
-  const types = correct.types.map(t => t.type.name);
 
-  // --- Stat card ---
   const card = document.createElement('div');
   card.className = 'stat-card';
 
@@ -536,20 +482,13 @@ function renderGame(correct, options) {
       </div>`;
   });
 
-  const typeBadgesHTML = types.map(t => {
-    const c = TYPE_COLORS[t] || { bg:'#D3D1C7', text:'#2C2C2A', border:'#B4B2A9' };
-    return `<span class="type-badge" style="background:${c.bg};color:${c.text};border-color:${c.border};">${t}</span>`;
-  }).join('');
-
   card.innerHTML = `
     ${statsHTML}
     <div class="stat-footer">
       <div class="bst-label">BST <span class="bst-val">${bst}</span></div>
-      <div class="types-row">${typeBadgesHTML}</div>
     </div>`;
   area.appendChild(card);
 
-  // --- Options ---
   const grid = document.createElement('div');
   grid.className = 'options-grid';
 
@@ -567,13 +506,11 @@ function renderGame(correct, options) {
 
   area.appendChild(grid);
 
-  // --- Result banner ---
   const banner = document.createElement('div');
   banner.className = 'result-banner';
   banner.id = 'result-banner';
   area.appendChild(banner);
 
-  // --- Next button ---
   const nextBtn = document.createElement('button');
   nextBtn.className = 'next-btn';
   nextBtn.id = 'next-btn';
@@ -581,7 +518,6 @@ function renderGame(correct, options) {
   nextBtn.addEventListener('click', startRound);
   area.appendChild(nextBtn);
 
-  // Animate bars
   requestAnimationFrame(() => requestAnimationFrame(() => {
     document.querySelectorAll('.bar-fill').forEach(el => {
       el.style.width = el.dataset.pct + '%';
@@ -593,10 +529,8 @@ function handleAnswer(clickedBtn, isCorrect, correct) {
   if (answered) return;
   answered = true;
 
-  // Reveal sprites
   document.querySelectorAll('.poke-sprite').forEach(img => img.classList.remove('hidden'));
 
-  // Mark buttons
   document.querySelectorAll('.option-btn').forEach(btn => {
     btn.disabled = true;
     if (btn.dataset.correct === 'true') btn.classList.add('correct');
@@ -623,12 +557,11 @@ function handleAnswer(clickedBtn, isCorrect, correct) {
   nextBtn.style.display = 'block';
 }
 
-// Gen filter buttons
 document.querySelectorAll('.gen-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const g = parseInt(btn.dataset.gen);
     if (activeGens.has(g)) {
-      if (activeGens.size === 1) return; // keep at least one
+      if (activeGens.size === 1) return;
       activeGens.delete(g);
       btn.classList.remove('active');
     } else {
